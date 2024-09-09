@@ -26,7 +26,7 @@ public class DemoApplication implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
-        commentUser();
+        commentUserZipWith2();
     }
 
     public void exampleSubscribe() throws Exception {
@@ -137,5 +137,37 @@ public class DemoApplication implements CommandLineRunner {
 
         usersMono.flatMap(user -> commentsMono.map(comments -> new CommentUser(user, comments)))
                 .subscribe(commentUser -> log.info(commentUser.toString()));
+    }
+
+    public void commentUserZipWith() throws Exception {
+        Mono<Users> usersMono = Mono.fromCallable(() -> new Users("John", "Doe"));
+        Mono<Comments> commentsMono = Mono.fromCallable(() -> {
+            Comments comment = new Comments();
+            comment.addComment("Hola este es el primer comentario");
+            comment.addComment("Hola este es el segundo comentario");
+            comment.addComment("Hola este es el tercer comentario");
+            return comment;
+        });
+
+        Mono<CommentUser> commentUserMono = usersMono.zipWith(commentsMono, CommentUser::new);
+        commentUserMono.subscribe(user -> log.info(user.toString()));
+    }
+
+    public void commentUserZipWith2() throws Exception {
+        Mono<Users> usersMono = Mono.fromCallable(() -> new Users("John", "Doe"));
+        Mono<Comments> commentsMono = Mono.fromCallable(() -> {
+            Comments comment = new Comments();
+            comment.addComment("Hola este es el primer comentario");
+            comment.addComment("Hola este es el segundo comentario");
+            comment.addComment("Hola este es el tercer comentario");
+            return comment;
+        });
+
+        Mono<CommentUser> commentUserMono = usersMono.zipWith(commentsMono).map(commentUsr -> {
+            Users user = commentUsr.getT1();
+            Comments comment = commentUsr.getT2();
+            return new CommentUser(user, comment);
+        });
+        commentUserMono.subscribe(user -> log.info(user.toString()));
     }
 }
