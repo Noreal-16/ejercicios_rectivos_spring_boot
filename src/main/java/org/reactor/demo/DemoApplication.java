@@ -24,7 +24,7 @@ public class DemoApplication implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
-        exampleFlatMap();
+        exampleCollectList();
     }
 
     public void exampleSubscribe() throws Exception {
@@ -76,5 +76,50 @@ public class DemoApplication implements CommandLineRunner {
                 });
         //Runable es una operación que se puede realizar al finalizar la operacion con hilos
         usersFlux.subscribe(user -> log.info(user.toString()));
+    }
+
+    public void exampleFlatMapUser() throws Exception {
+        List<Users> usersList = new ArrayList<>();
+        usersList.add(new Users("John", "Doe"));
+        usersList.add(new Users("Santiago", "Armijos"));
+        usersList.add(new Users("Diana", "Samaniego"));
+        usersList.add(new Users("Valentina", "Castro"));
+        usersList.add(new Users("Xavier", "Caicedo"));
+        usersList.add(new Users("Alex", "Manga"));
+        usersList.add(new Users("Maria", "Perez"));
+        usersList.add(new Users("Juan", "Condoy"));
+
+        Flux<Users> usersFlux = Flux.fromIterable(usersList)
+                .map(name -> new Users(name.getName().toUpperCase(), name.getLastName().toUpperCase()))
+                .flatMap(users -> {
+                    if (users.getName().equalsIgnoreCase("Santiago")) {
+                        return Mono.just(users);
+                    } else {
+                        return Mono.empty();
+                    }
+                })
+                .map(user -> {
+                    user.setName(user.getName().toLowerCase());
+                    return user;
+                });
+        //Runable es una operación que se puede realizar al finalizar la operacion con hilos
+        usersFlux.subscribe(user -> log.info(user.toString()));
+    }
+
+    public void exampleCollectList() throws Exception {
+        List<Users> usersList = new ArrayList<>();
+        usersList.add(new Users("John", "Doe"));
+        usersList.add(new Users("Santiago", "Armijos"));
+        usersList.add(new Users("Diana", "Samaniego"));
+        usersList.add(new Users("Valentina", "Castro"));
+        usersList.add(new Users("Xavier", "Caicedo"));
+        usersList.add(new Users("Alex", "Manga"));
+        usersList.add(new Users("Maria", "Perez"));
+        usersList.add(new Users("Juan", "Condoy"));
+
+        Flux.fromIterable(usersList)
+                .collectList().subscribe(listUser -> {
+                    listUser.forEach(l -> log.info(l.toString()));
+                });
     }
 }
