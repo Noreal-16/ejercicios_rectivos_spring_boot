@@ -1,5 +1,7 @@
 package org.reactor.demo;
 
+import org.reactor.demo.models.CommentUser;
+import org.reactor.demo.models.Comments;
 import org.reactor.demo.models.Users;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,7 +26,7 @@ public class DemoApplication implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
-        exampleCollectList();
+        commentUser();
     }
 
     public void exampleSubscribe() throws Exception {
@@ -121,5 +123,19 @@ public class DemoApplication implements CommandLineRunner {
                 .collectList().subscribe(listUser -> {
                     listUser.forEach(l -> log.info(l.toString()));
                 });
+    }
+
+    public void commentUser() throws Exception {
+        Mono<Users> usersMono = Mono.fromCallable(() -> new Users("John", "Doe"));
+        Mono<Comments> commentsMono = Mono.fromCallable(() -> {
+            Comments comment = new Comments();
+            comment.addComment("Hola este es el primer comentario");
+            comment.addComment("Hola este es el segundo comentario");
+            comment.addComment("Hola este es el tercer comentario");
+            return comment;
+        });
+
+        usersMono.flatMap(user -> commentsMono.map(comments -> new CommentUser(user, comments)))
+                .subscribe(commentUser -> log.info(commentUser.toString()));
     }
 }
