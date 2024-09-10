@@ -14,6 +14,8 @@ import reactor.core.publisher.Mono;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.CountDownLatch;
 
 @SpringBootApplication
@@ -28,7 +30,29 @@ public class DemoApplication implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
-        commentRangeRetry();
+        exampleCreateTimer();
+    }
+
+    public void exampleCreateTimer() {
+        Flux.create(emitter -> {
+                    Timer timer = new Timer();
+                    timer.scheduleAtFixedRate(new TimerTask() {
+                        private Integer counter = 0;
+
+                        @Override
+                        public void run() {
+                            emitter.next(++counter);
+                            if (counter == 10) {
+                                emitter.isCancelled();
+                                emitter.complete();
+                            }
+                        }
+                    }, 1000, 1000);
+                })
+                .subscribe(message -> log.info(message.toString()),
+                        error -> log.error(error.toString()),
+                        () -> log.info("Finalizado"));
+        ;
     }
 
     public void exampleSubscribe() throws Exception {
