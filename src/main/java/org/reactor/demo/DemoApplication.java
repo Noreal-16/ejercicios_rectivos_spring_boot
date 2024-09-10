@@ -11,6 +11,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -26,7 +27,7 @@ public class DemoApplication implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
-        commentUserZipWith2();
+        commentRangeDelay2();
     }
 
     public void exampleSubscribe() throws Exception {
@@ -169,5 +170,30 @@ public class DemoApplication implements CommandLineRunner {
             return new CommentUser(user, comment);
         });
         commentUserMono.subscribe(user -> log.info(user.toString()));
+    }
+
+    public void commentRangeZipWith() throws Exception {
+        Flux.just(1, 2, 3, 4, 5)
+                .map(item -> item * 2)
+                .zipWith(Flux.range(0, 5),
+                        (one, thou) -> String.format("Primer valor %d, segundo valor %d", one, thou))
+                .subscribe(log::info);
+    }
+
+    public void commentRangeDelay() throws Exception {
+        Flux<Integer> range = Flux.range(1, 12);
+        Flux<Long> delay = Flux.interval(Duration.ofSeconds(1));
+        range.zipWith(delay, (ra, de) -> ra)
+                .doOnNext(message -> log.info(message.toString()))
+                .blockLast();
+    }
+
+    public void commentRangeDelay2() throws Exception {
+        Flux<Integer> range = Flux.range(1, 12)
+                .delayElements(Duration.ofSeconds(1))
+                .doOnNext(message -> log.info(message.toString()));
+
+        range.subscribe();
+        Thread.sleep(12000);
     }
 }
