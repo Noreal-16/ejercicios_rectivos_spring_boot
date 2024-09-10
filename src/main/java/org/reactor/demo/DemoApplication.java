@@ -14,6 +14,7 @@ import reactor.core.publisher.Mono;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
 
 @SpringBootApplication
 public class DemoApplication implements CommandLineRunner {
@@ -27,7 +28,7 @@ public class DemoApplication implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
-        commentRangeDelay2();
+        commentRangeRetry();
     }
 
     public void exampleSubscribe() throws Exception {
@@ -195,5 +196,21 @@ public class DemoApplication implements CommandLineRunner {
 
         range.subscribe();
         Thread.sleep(12000);
+    }
+
+    public void commentRangeRetry() throws Exception {
+        CountDownLatch countDownLatch = new CountDownLatch(1);
+        Flux.interval(Duration.ofSeconds(1))
+                .doOnTerminate(countDownLatch::countDown)
+                .flatMap(duration -> {
+                    if (duration >= 5) {
+                        return Flux.error(new InterruptedException("Solo se puede llegar hasta 5"));
+                    }
+                    return Flux.just(duration);
+                }).map(message -> "Hola " + message.toString())
+                .retry(2)
+                .subscribe(log::info, error -> log.error(error.getMessage()));
+
+        countDownLatch.await();
     }
 }
